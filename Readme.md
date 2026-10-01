@@ -1,7 +1,7 @@
 # Terraform Workspace & Git Branch Management
 
 This project uses **Git branches** and **Terraform workspaces** together to maintain isolated infrastructure environments.
-
+<img src="Terraform Branch-to-Workspace Workflow.png" alt="workflow diagram" />
 The mapping is:
 
 | Git Branch | Terraform Workspace | Environment |
