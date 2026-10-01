@@ -21,6 +21,6 @@ variable "ec2_ami_id" {
 }
 
 variable "env" {
-  default = "prd"
+  default = "dev" #branch dev for workspace development, branch main for workspace production
   type    = string
 }
