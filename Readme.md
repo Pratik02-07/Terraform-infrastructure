@@ -340,3 +340,86 @@ ssh -i "terra-key-ec2" ubuntu@ <your-ec2-public-ip-address>
 
 
 
+
+---
+
+# 11. Current Terraform Configuration
+
+The repository now contains four Terraform areas:
+
+| Directory | Purpose |
+|---|---|
+| Root directory | EC2 infrastructure with a key pair, security group, Nginx user data, and two instance types |
+| `remote-backend/` | S3 bucket and DynamoDB table used for remote Terraform state and state locking |
+| `terraform-modules/` | Reusable application infrastructure for development, staging, and production |
+| `terraform-eks/` | VPC and Amazon EKS cluster infrastructure |
+
+## Remote Backend Bootstrap
+
+Create the S3 bucket and DynamoDB lock table before initializing the root configuration:
+
+```bash
+cd remote-backend
+terraform init
+terraform plan
+terraform apply
+cd ..
+terraform init -reconfigure
+```
+
+The root backend stores state in the `terraform-remote-state-bucket-0207` S3 bucket in `ap-south-1` and uses the `terraform-remote-state-table` DynamoDB table for locking.
+
+## Root EC2 Infrastructure
+
+The root configuration creates two EC2 instances with `for_each`: one `t3.micro` and one `t3.small`. It reads the public key from `terra-key-ec2.pub`, installs Nginx using `install_nginx.sh`, and allows inbound SSH on port `22`, HTTP on port `80`, and application traffic on port `8000`. After applying, view the public addresses with:
+
+```bash
+terraform output ec2_public_ip
+terraform output ec2_public_dns
+```
+
+Connect to an instance with:
+
+```bash
+ssh -i "terra-key-ec2" ubuntu@<your-ec2-public-ip-address>
+```
+
+## Terraform Modules
+
+The `terraform-modules` directory uses the `infra-app` module for three environments:
+
+| Module | Instances | Type |
+|---|---:|---|
+| `dev-infra` | 1 | `t3.micro` |
+| `stg-infra` | 1 | `t3.small` |
+| `prd-infra` | 2 | `t3.medium` |
+
+Run the module configuration independently:
+
+```bash
+cd terraform-modules
+terraform init
+terraform plan
+terraform apply
+cd ..
+```
+
+## EKS Infrastructure
+
+The `terraform-eks` directory creates a VPC with public, private, and intra subnets, NAT and VPN gateways, and an Amazon EKS cluster. The cluster uses Kubernetes `1.31`, public API endpoint access, and a managed spot node group with two desired nodes and a maximum of three nodes.
+
+Run it independently from the root configuration:
+
+```bash
+cd terraform-eks
+terraform init
+terraform plan
+terraform apply
+cd ..
+```
+
+Always review the plan and confirm the selected AWS account and region before applying any configuration.
+
+
+
+
